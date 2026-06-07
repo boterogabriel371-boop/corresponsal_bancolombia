@@ -48,6 +48,36 @@ export default function App() {
     closures,
   } = useCashStore();
 
+  // Dark / Light Mode state with LocalStorage persistence
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    try {
+      const saved = localStorage.getItem("theme");
+      if (saved === "light" || saved === "dark") return saved;
+      // Default to light
+      return "light";
+    } catch {
+      return "light";
+    }
+  });
+
+  useEffect(() => {
+    try {
+      const root = document.documentElement;
+      if (theme === "dark") {
+        root.classList.add("dark");
+      } else {
+        root.classList.remove("dark");
+      }
+      localStorage.setItem("theme", theme);
+    } catch (e) {
+      console.error("Theme persistence error", e);
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
+
   // Dialog/Modal states
   const [showNewDayModal, setShowNewDayModal] = useState(false);
   const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
@@ -150,7 +180,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-850 font-sans" id="app-root-container">
+    <div className="min-h-screen bg-slate-50 text-slate-850 dark:bg-slate-950 dark:text-slate-100 font-sans transition-colors duration-200" id="app-root-container">
       
       {/* HEADER SECTION */}
       <Header
@@ -158,6 +188,8 @@ export default function App() {
         onPrint={() => handlePrint(getCurrentStateAsClosure())}
         onExportPDF={() => handleExportPDF(getCurrentStateAsClosure())}
         onNewDay={() => setShowNewDayModal(true)}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
 
       {/* PRIMARY VIEWER PORTAL */}
@@ -191,11 +223,11 @@ export default function App() {
 
       {/* PERSISTENT INVISIBLE PRINT CONTENT FOR HTML2CANVAS & DIRECT SYSTEM PRINTING */}
       <div 
-        className="fixed top-0 left-0 -z-50 pointer-events-none overflow-hidden" 
-        style={{ width: "0px", height: "0px", opacity: 0 }}
+        className="absolute left-[-9999px] top-[-9999px] overflow-hidden bg-white" 
+        style={{ width: "792px" }}
         id="hidden-print-zone"
       >
-        <div id="hidden-print-report-wrapper" style={{ width: "792px", backgroundColor: "#ffffff" }}>
+        <div id="hidden-print-report-wrapper" className="bg-white" style={{ width: "792px" }}>
           <PrintReportView closure={printClosure || getCurrentStateAsClosure()} elementId="rendered-pdf-layout" />
         </div>
       </div>
@@ -212,8 +244,8 @@ export default function App() {
           }
           #hidden-print-zone {
             position: absolute;
-            left: 0;
-            top: 0;
+            left: 0 !important;
+            top: 0 !important;
             width: 100% !important;
             height: auto !important;
             opacity: 1 !important;
@@ -232,38 +264,38 @@ export default function App() {
       {/* MODAL 1: NUEVO DÍA DIALOGUE */}
       {showNewDayModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs" id="modal-nuevo-dia">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-gray-150 flex flex-col gap-5 animate-scale-up" id="modal-nd-content">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl border border-gray-150 dark:border-slate-800 flex flex-col gap-5 animate-scale-up" id="modal-nd-content">
             <div className="flex items-start gap-3.5" id="modal-nd-header">
-              <div className="p-3 bg-amber-50 border border-amber-200 text-amber-600 rounded-xl" id="modal-nd-icon">
+              <div className="p-3 bg-amber-50 dark:bg-amber-955 border border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 rounded-xl" id="modal-nd-icon">
                 <HelpCircle size={22} className="animate-pulse" />
               </div>
               <div id="modal-nd-title-desc">
-                <h3 className="font-bold text-gray-900 text-base" id="modal-nd-title">
+                <h3 className="font-bold text-gray-900 dark:text-slate-100 text-base" id="modal-nd-title">
                   Iniciar Nuevo Día de Caja
                 </h3>
-                <p className="text-xs text-gray-500 mt-1 leading-relaxed" id="modal-nd-body">
-                  ¿Deseas conservar los saldos de plataformas administrativas (<strong className="text-gray-800">Bancolombia, TKS, PTM</strong>) para el siguiente turno de cuadre?
+                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 leading-relaxed" id="modal-nd-body">
+                  ¿Deseas conservar los saldos de plataformas administrativas (<strong className="text-gray-800 dark:text-slate-200">Bancolombia, TKS, PTM</strong>) para el siguiente turno de cuadre?
                 </p>
               </div>
             </div>
 
             {/* Summarized visual balances for context */}
-            <div className="bg-gray-50 border border-gray-150 rounded-xl p-3.5 flex flex-col gap-2 text-xs font-semibold" id="modal-nd-context-sums">
+            <div className="bg-gray-50 dark:bg-slate-800/60 border border-gray-150 dark:border-slate-700/80 rounded-xl p-3.5 flex flex-col gap-2 text-xs font-semibold" id="modal-nd-context-sums">
               <div className="flex justify-between" id="nd-context-saldo">
-                <span className="text-gray-500">Saldo Bancolombia:</span>
-                <span className="font-mono text-gray-800">{formatCOP(bancolombiaBalance)}</span>
+                <span className="text-gray-500 dark:text-slate-400">Saldo Bancolombia:</span>
+                <span className="font-mono text-gray-800 dark:text-slate-200">{formatCOP(bancolombiaBalance)}</span>
               </div>
               <div className="flex justify-between" id="nd-context-cupo">
-                <span className="text-gray-500">Cupo Bancolombia:</span>
-                <span className="font-mono text-gray-800">{formatCOP(bancolombiaCredit)}</span>
+                <span className="text-gray-500 dark:text-slate-400">Cupo Bancolombia:</span>
+                <span className="font-mono text-gray-800 dark:text-slate-200">{formatCOP(bancolombiaCredit)}</span>
               </div>
               <div className="flex justify-between" id="nd-context-tks">
-                <span className="text-gray-500">Saldo TKS:</span>
-                <span className="font-mono text-gray-800">{formatCOP(tksBalance)}</span>
+                <span className="text-gray-500 dark:text-slate-400">Saldo TKS:</span>
+                <span className="font-mono text-gray-800 dark:text-slate-200">{formatCOP(tksBalance)}</span>
               </div>
               <div className="flex justify-between" id="nd-context-ptm">
-                <span className="text-gray-500">Saldo PTM:</span>
-                <span className="font-mono text-gray-800">{formatCOP(ptmBalance)}</span>
+                <span className="text-gray-500 dark:text-slate-400">Saldo PTM:</span>
+                <span className="font-mono text-gray-800 dark:text-slate-200">{formatCOP(ptmBalance)}</span>
               </div>
             </div>
 
@@ -273,7 +305,7 @@ export default function App() {
                   resetCurrentClosure(true);
                   setShowNewDayModal(false);
                 }}
-                className="flex-1 sm:flex-initial inline-flex justify-center items-center px-4 py-2.5 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-xl transition-all cursor-pointer"
+                className="flex-1 sm:flex-initial inline-flex justify-center items-center px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer"
                 id="btn-nd-yes"
               >
                 Sí, conservar saldos
@@ -283,14 +315,14 @@ export default function App() {
                   resetCurrentClosure(false);
                   setShowNewDayModal(false);
                 }}
-                className="flex-1 sm:flex-initial inline-flex justify-center items-center px-4 py-2.5 text-xs font-bold text-white bg-slate-900 hover:bg-slate-850 rounded-xl shadow-xs transition-all cursor-pointer"
+                className="flex-1 sm:flex-initial inline-flex justify-center items-center px-4 py-2.5 text-xs font-bold text-white bg-slate-900 dark:bg-indigo-600 hover:bg-slate-850 dark:hover:bg-indigo-700 rounded-xl shadow-xs transition-all cursor-pointer"
                 id="btn-nd-no"
               >
                 No, reiniciar todo
               </button>
               <button
                 onClick={() => setShowNewDayModal(false)}
-                className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all cursor-pointer"
+                className="p-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer"
                 id="btn-nd-cancel"
                 title="Cancelar operación"
               >
@@ -304,38 +336,38 @@ export default function App() {
       {/* MODAL 2: GUARDADO EXITOSO SNAPSHOT OVERLAY */}
       {showSaveSuccessModal && justSavedClosure && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs" id="modal-save-success">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-gray-150 flex flex-col gap-5 animate-scale-up" id="modal-ss-content">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-xl border border-gray-150 dark:border-slate-800 flex flex-col gap-5 animate-scale-up" id="modal-ss-content">
             <div className="flex flex-col items-center text-center gap-3 pb-2" id="modal-ss-banner">
-              <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-250 flex items-center justify-center text-emerald-600 shadow-2xs" id="modal-ss-[ok-icon]">
+              <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-250 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-2xs" id="modal-ss-[ok-icon]">
                 <CheckCircle2 size={32} className="animate-bounce" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-900 text-lg" id="modal-ss-title">
+                <h3 className="font-bold text-gray-900 dark:text-slate-100 text-lg" id="modal-ss-title">
                   ¡Cierre Guardado!
                 </h3>
-                <p className="text-xs text-gray-400 mt-1" id="modal-ss-id-stamp">
+                <p className="text-xs text-gray-400 dark:text-slate-400 mt-1" id="modal-ss-id-stamp">
                   Se ha creado correctamente el Snapshot histórico para este día.
                 </p>
               </div>
             </div>
 
             {/* Compact overview receipt card */}
-            <div className="bg-slate-50 border border-slate-150 rounded-xl p-4 flex flex-col gap-2.5 text-xs font-semibold" id="modal-ss-receipt">
+            <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-150 dark:border-slate-700/80 rounded-xl p-4 flex flex-col gap-2.5 text-xs font-semibold" id="modal-ss-receipt">
               <div className="flex justify-between" id="ss-receipt-date">
-                <span className="text-gray-500">Fecha Cierre:</span>
-                <span className="text-gray-850">{formatLocalDate(justSavedClosure.createdAt)}</span>
+                <span className="text-gray-500 dark:text-slate-400">Fecha Cierre:</span>
+                <span className="text-gray-850 dark:text-slate-200">{formatLocalDate(justSavedClosure.createdAt)}</span>
               </div>
               <div className="flex justify-between" id="ss-receipt-cash">
-                <span className="text-gray-500">Total Efectivo:</span>
-                <span className="font-mono text-gray-850">{formatCOP(justSavedClosure.totalCash)}</span>
+                <span className="text-gray-500 dark:text-slate-400">Total Efectivo:</span>
+                <span className="font-mono text-gray-850 dark:text-slate-200">{formatCOP(justSavedClosure.totalCash)}</span>
               </div>
-              <div className="flex justify-between mt-1 pt-2.5 border-t border-slate-205/60" id="ss-receipt-gt">
-                <span className="text-slate-900 font-bold">Total Consolidado Caja:</span>
-                <span className="font-mono font-black text-slate-900 text-sm">{formatCOP(justSavedClosure.grandTotal)}</span>
+              <div className="flex justify-between mt-1 pt-2.5 border-t border-slate-205/60 dark:border-slate-700" id="ss-receipt-gt">
+                <span className="text-slate-900 dark:text-slate-100 font-bold">Total Consolidado Caja:</span>
+                <span className="font-mono font-black text-slate-900 dark:text-slate-100 text-sm">{formatCOP(justSavedClosure.grandTotal)}</span>
               </div>
             </div>
 
-            <p className="text-[11px] text-gray-400 text-center leading-relaxed" id="modal-ss-actions-invite">
+            <p className="text-[11px] text-gray-400 dark:text-slate-400 text-center leading-relaxed" id="modal-ss-actions-invite">
               ¿Qué te gustaría hacer con este snapshot auditado antes de iniciar un nuevo día?
             </p>
 
@@ -344,7 +376,7 @@ export default function App() {
                 onClick={() => {
                   handleExportPDF(justSavedClosure);
                 }}
-                className="inline-flex justify-center items-center gap-1.5 px-3 py-2.5 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all cursor-pointer"
+                className="inline-flex justify-center items-center gap-1.5 px-3 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer"
                 id="btn-ss-pdf"
               >
                 <Download size={13} />
@@ -354,7 +386,7 @@ export default function App() {
                 onClick={() => {
                   handlePrint(justSavedClosure);
                 }}
-                className="inline-flex justify-center items-center gap-1.5 px-3 py-2.5 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all cursor-pointer"
+                className="inline-flex justify-center items-center gap-1.5 px-3 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer"
                 id="btn-ss-print"
               >
                 <FileText size={13} />
@@ -362,23 +394,23 @@ export default function App() {
               </button>
             </div>
 
-            <div className="flex gap-2 justify-center pt-2 border-t border-gray-100" id="modal-ss-footer-actions">
+            <div className="flex gap-2 justify-center pt-2 border-t border-gray-100 dark:border-slate-800" id="modal-ss-footer-actions">
               <button
                 onClick={() => {
                   setShowSaveSuccessModal(false);
                   setActiveTab("historial");
                 }}
-                className="text-xs text-slate-800 hover:text-slate-950 font-bold cursor-pointer"
+                className="text-xs text-slate-800 dark:text-indigo-400 hover:text-slate-950 dark:hover:text-indigo-300 font-bold cursor-pointer"
                 id="btn-ss-view-history"
               >
                 Ir a Archivo Histórico
               </button>
-              <span className="text-gray-300">•</span>
+              <span className="text-gray-300 dark:text-slate-700">•</span>
               <button
                 onClick={() => {
                   setShowSaveSuccessModal(false);
                 }}
-                className="text-xs text-gray-400 hover:text-gray-600 font-semibold cursor-pointer"
+                className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 font-semibold cursor-pointer"
                 id="btn-ss-dismiss"
               >
                 Permanecer Aquí
@@ -391,9 +423,9 @@ export default function App() {
       {/* OVERLAY EXPORTING SPINNER */}
       {isExporting && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs" id="exporting-overlay">
-          <div className="bg-white rounded-xl p-5 shadow-xl border border-gray-150 flex flex-col items-center justify-center gap-3.5" id="exporting-box">
-            <Loader2 className="animate-spin text-slate-900" size={32} />
-            <p className="text-xs font-bold text-gray-700 font-mono tracking-tight" id="exporting-message">
+          <div className="bg-white dark:bg-slate-900 rounded-xl p-5 shadow-xl border border-gray-150 dark:border-slate-800 flex flex-col items-center justify-center gap-3.5" id="exporting-box">
+            <Loader2 className="animate-spin text-slate-900 dark:text-indigo-400" size={32} />
+            <p className="text-xs font-bold text-gray-700 dark:text-slate-300 font-mono tracking-tight" id="exporting-message">
               {exportMessage}
             </p>
           </div>
