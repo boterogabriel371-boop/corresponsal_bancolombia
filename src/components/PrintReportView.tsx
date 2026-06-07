@@ -114,8 +114,10 @@ export default function PrintReportView({ closure, elementId = "hidden-print-rep
                 <span className="text-slate-500 font-semibold">Saldo Bancolombia</span>
                 <span className="font-mono font-bold text-slate-900">{formatCOP(closure.bancolombiaBalance)}</span>
               </div>
-              <div className="flex justify-between text-xs" id="print-bal-cupo">
-                <span className="text-slate-500 font-semibold">Cupo Bancolombia</span>
+              <div className="flex justify-between text-xs items-center" id="print-bal-cupo">
+                <span className="text-slate-500 font-semibold flex items-center gap-1">
+                  Cupo Bancolombia <span className="text-[9px] font-normal text-slate-400 bg-slate-100 border border-slate-200 px-1 py-0.2 rounded">Informativo</span>
+                </span>
                 <span className="font-mono font-bold text-slate-900">{formatCOP(closure.bancolombiaCredit)}</span>
               </div>
               <div className="flex justify-between text-xs" id="print-bal-tks">

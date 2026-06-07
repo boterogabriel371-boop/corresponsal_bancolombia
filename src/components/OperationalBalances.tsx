@@ -33,7 +33,7 @@ export default function OperationalBalances() {
     e.target.select();
   };
 
-  const totalBalances = bancolombiaBalance + bancolombiaCredit + tksBalance + ptmBalance;
+  const totalBalances = bancolombiaBalance + tksBalance + ptmBalance;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden" id="operational-balances-module">
@@ -82,7 +82,7 @@ export default function OperationalBalances() {
         {/* Cupo Bancolombia */}
         <div className="flex flex-col gap-1.5" id="group-bancolombia-cupo">
           <label className="text-xs font-bold text-slate-600 flex items-center justify-between" htmlFor="input-bancolombia-credit">
-            <span>Cupo Bancolombia</span>
+            <span>Cupo Bancolombia <span className="text-[9px] font-normal text-indigo-600 dark:text-indigo-400 bg-indigo-50/60 dark:bg-slate-905 px-1.5 py-0.5 rounded border border-indigo-100/50 dark:border-slate-800">Informativo</span></span>
             {bancolombiaCredit > 0 && (
               <span className="text-[10px] text-slate-500 font-mono font-extrabold bg-slate-50 border border-slate-200 px-1.5 rounded">
                 {formatCOP(bancolombiaCredit)}

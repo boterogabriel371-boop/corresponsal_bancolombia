@@ -32,6 +32,17 @@ export interface CashClosure {
   observations: string;
 
   grandTotal: number;
+  syncedToSheets?: boolean; // Indicator if synced to Google Sheets
+}
+
+export interface GoogleSheetsConfig {
+  clientId: string;
+  spreadsheetId: string;
+  sheetName: string;
+  autoSync: boolean;
+  accessToken: string | null;
+  tokenExpiresAt: number | null; // timestamp millisecond
+  lastSyncedAt: string | null; // ISO timestamp string
 }
 
 export type ActiveTab = "cuadre" | "historial";

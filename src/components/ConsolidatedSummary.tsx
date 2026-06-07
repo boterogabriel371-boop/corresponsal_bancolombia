@@ -24,7 +24,6 @@ export default function ConsolidatedSummary() {
   const grandTotal =
     totalCash +
     bancolombiaBalance +
-    bancolombiaCredit +
     tksBalance +
     ptmBalance +
     totalAdjustments;
@@ -70,7 +69,7 @@ export default function ConsolidatedSummary() {
           <div className="flex items-center justify-between" id="summary-item-cupo">
             <div className="flex items-center gap-2 text-xs text-slate-600 font-bold" id="label-cupo-summary">
               <CreditCard size={14} className="text-slate-400" />
-              <span>Cupo Bancolombia</span>
+              <span>Cupo Bancolombia <span className="text-[9px] text-slate-400 dark:text-slate-500 font-normal ml-1 bg-slate-100 dark:bg-slate-850 px-1 py-0.5 rounded">Informativo</span></span>
             </div>
             <span className={`text-xs font-mono font-bold ${bancolombiaCredit > 0 ? "text-slate-900" : "text-slate-400"}`} id="val-cupo-summary">
               {formatCOP(bancolombiaCredit)}

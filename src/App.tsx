@@ -15,6 +15,8 @@ import ConsolidatedSummary from "./components/ConsolidatedSummary";
 import ObservationsBox from "./components/ObservationsBox";
 import ClosureHistory from "./components/ClosureHistory";
 import PrintReportView from "./components/PrintReportView";
+import GoogleSheetsSync from "./components/GoogleSheetsSync";
+import { syncClosureToGoogleSheets } from "./sheetsService";
 
 // Libraries for PDF generation
 import { jsPDF } from "jspdf";
@@ -46,6 +48,9 @@ export default function App() {
     adjustments,
     observations,
     closures,
+    sheetsConfig,
+    markClosureSynced,
+    updateSheetsConfig,
   } = useCashStore();
 
   // Dark / Light Mode state with LocalStorage persistence
@@ -74,6 +79,55 @@ export default function App() {
     }
   }, [theme]);
 
+  // Google Sheets OAuth Token Grabber on Mount
+  useEffect(() => {
+    try {
+      if (window.location.hash) {
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get("access_token");
+        const expiresIn = params.get("expires_in");
+        
+        if (accessToken) {
+          const expiresMs = expiresIn ? parseInt(expiresIn, 10) * 1000 : 3600 * 1000;
+          const expiresAt = Date.now() + expiresMs;
+          
+          updateSheetsConfig({
+            accessToken,
+            tokenExpiresAt: expiresAt,
+          });
+          
+          // Clean the hash cleanly from address bar
+          window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing OAuth token on load:", e);
+    }
+  }, [updateSheetsConfig]);
+
+  // Google Sheets Auto-Sync Background Handler
+  useEffect(() => {
+    const isAuthorized = !!sheetsConfig.accessToken && 
+      !!sheetsConfig.tokenExpiresAt && 
+      sheetsConfig.tokenExpiresAt > Date.now();
+
+    if (isAuthorized && sheetsConfig.autoSync && sheetsConfig.spreadsheetId && closures.length > 0) {
+      const latestClosure = closures[0];
+      if (!latestClosure.syncedToSheets) {
+        // Run background sync
+        syncClosureToGoogleSheets(latestClosure, sheetsConfig, markClosureSynced, updateSheetsConfig)
+          .then((res) => {
+            if (res.success) {
+              console.log(`Auto-sincronizado exitoso para cierre: ${latestClosure.id}`);
+            } else {
+              console.warn(`Error auto-sincronizando: ${res.error}`);
+            }
+          });
+      }
+    }
+  }, [closures, sheetsConfig, markClosureSynced, updateSheetsConfig]);
+
   const toggleTheme = () => {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
@@ -95,7 +149,6 @@ export default function App() {
     const grandTotal =
       totalCash +
       bancolombiaBalance +
-      bancolombiaCredit +
       tksBalance +
       ptmBalance +
       totalAdjustments;
@@ -209,6 +262,7 @@ export default function App() {
               <ConsolidatedSummary />
               <OperationalBalances />
               <DynamicAdjustments />
+              <GoogleSheetsSync />
             </div>
 
           </div>
@@ -223,8 +277,8 @@ export default function App() {
 
       {/* PERSISTENT INVISIBLE PRINT CONTENT FOR HTML2CANVAS & DIRECT SYSTEM PRINTING */}
       <div 
-        className="absolute left-[-9999px] top-[-9999px] overflow-hidden bg-white" 
-        style={{ width: "792px" }}
+        style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "792px" }}
+        className="absolute overflow-hidden bg-white"
         id="hidden-print-zone"
       >
         <div id="hidden-print-report-wrapper" className="bg-white" style={{ width: "792px" }}>
@@ -286,7 +340,7 @@ export default function App() {
                 <span className="font-mono text-gray-800 dark:text-slate-200">{formatCOP(bancolombiaBalance)}</span>
               </div>
               <div className="flex justify-between" id="nd-context-cupo">
-                <span className="text-gray-500 dark:text-slate-400">Cupo Bancolombia:</span>
+                <span className="text-gray-500 dark:text-slate-400">Cupo Bancolombia (Informativo):</span>
                 <span className="font-mono text-gray-800 dark:text-slate-200">{formatCOP(bancolombiaCredit)}</span>
               </div>
               <div className="flex justify-between" id="nd-context-tks">

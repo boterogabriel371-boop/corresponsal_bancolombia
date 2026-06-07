@@ -3,10 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCashStore } from "../store";
 import { formatCOP, formatLocalDate, formatLocalTime } from "../utils";
 import { CashClosure } from "../types";
+import GoogleSheetsSync from "./GoogleSheetsSync";
 import { 
   Calendar, 
   Search, 
@@ -37,6 +38,14 @@ interface ClosureHistoryProps {
 
 export default function ClosureHistory({ onPrintHistoric, onExportHistoricPDF }: ClosureHistoryProps) {
   const { closures, deleteClosure, selectedClosureId, setSelectedClosureId } = useCashStore();
+  
+  // Custom delete item confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Auto-reset delete confirmation mode if selected item changes
+  useEffect(() => {
+    setShowDeleteConfirm(false);
+  }, [selectedClosureId]);
   
   // States of filter
   const [startDateStr, setStartDateStr] = useState("");
@@ -81,6 +90,8 @@ export default function ClosureHistory({ onPrintHistoric, onExportHistoricPDF }:
       {/* LEFT COLUMN: FILTERS & CARD LIST */}
       <div className="w-full lg:w-[420px] flex flex-col gap-4 shrink-0" id="history-sidebar">
         
+        <GoogleSheetsSync />
+
         {/* Filters Panel */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs flex flex-col gap-3" id="filters-container">
           <h4 className="text-sm font-extrabold text-slate-800 dark:text-slate-100 flex items-center gap-1.5" id="filters-title">
@@ -249,12 +260,7 @@ export default function ClosureHistory({ onPrintHistoric, onExportHistoricPDF }:
                 </button>
                 <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1" id="det-divider"></div>
                 <button
-                  onClick={() => {
-                    const ok = window.confirm("¿Seguro que desea eliminar permanentemente este registro del archivo?");
-                    if (ok) {
-                      deleteClosure(selectedClosure.id);
-                    }
-                  }}
+                  onClick={() => setShowDeleteConfirm(true)}
                   className="p-2 text-rose-550 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors cursor-pointer"
                   title="Eliminar este cierre permanentemente"
                   id="det-btn-delete"
@@ -340,7 +346,7 @@ export default function ClosureHistory({ onPrintHistoric, onExportHistoricPDF }:
 
                   {/* Bancolombia Credit */}
                   <div className="flex items-center justify-between text-xs font-bold" id="det-bal-cupo">
-                    <span className="text-slate-500">Cupo Bancolombia</span>
+                    <span className="text-slate-500 flex items-center gap-1">Cupo Bancolombia <span className="text-[9px] font-normal text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-850 px-1 rounded">Informativo</span></span>
                     <span className={`font-mono text-slate-800 dark:text-slate-200 ${selectedClosure.bancolombiaCredit > 0 ? "font-bold text-indigo-650 dark:text-indigo-400" : "opacity-60"}`}>
                       {formatCOP(selectedClosure.bancolombiaCredit)}
                     </span>
@@ -431,6 +437,49 @@ export default function ClosureHistory({ onPrintHistoric, onExportHistoricPDF }:
           </div>
         )}
       </div>
+
+      {/* CUSTOM CONFIRM DELETE MODAL */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs" id="modal-delete-confirm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-sm w-full p-6 shadow-xl border border-gray-150 dark:border-slate-800 flex flex-col gap-5 animate-scale-up" id="modal-delete-content">
+            <div className="flex items-start gap-4" id="modal-delete-header">
+              <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 text-rose-600 dark:text-rose-450 rounded-xl shrink-0" id="modal-delete-icon">
+                <Trash2 size={22} className="animate-pulse" />
+              </div>
+              <div id="modal-delete-title-desc">
+                <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base" id="modal-delete-title">
+                  Eliminar Reporte de Caja
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed" id="modal-delete-body">
+                  ¿Está seguro de que desea eliminar permanentemente este reporte de caja del historial? Esta acción es irreversible.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2.5 justify-end" id="modal-delete-actions">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 inline-flex justify-center items-center px-4 py-2.5 text-xs font-bold text-slate-750 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer"
+                id="btn-delete-cancel"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  if (selectedClosure) {
+                    deleteClosure(selectedClosure.id);
+                  }
+                  setShowDeleteConfirm(false);
+                }}
+                className="flex-1 inline-flex justify-center items-center px-4 py-2.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-700/80 rounded-xl shadow-xs transition-all cursor-pointer animate-pulse"
+                id="btn-delete-confirm"
+              >
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -83,7 +83,7 @@ export default function CashCounterTable() {
       updateDenominationQuantity(denom, res.data);
     } else {
       // Show descriptive message and update store calculation to 0 to prevent corrupt tally
-      setErrors(prev => ({ ...prev, [denom]: res.error.errors[0].message }));
+      setErrors(prev => ({ ...prev, [denom]: res.error.issues[0].message }));
       updateDenominationQuantity(denom, 0);
     }
   };

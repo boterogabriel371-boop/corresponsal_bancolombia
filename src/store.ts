@@ -4,7 +4,7 @@
  */
 
 import { create } from "zustand";
-import { CashClosure, DenominationItem, AdjustmentItem, ActiveTab } from "./types";
+import { CashClosure, DenominationItem, AdjustmentItem, ActiveTab, GoogleSheetsConfig } from "./types";
 
 interface CashState {
   closures: CashClosure[];
@@ -20,6 +20,11 @@ interface CashState {
   adjustments: AdjustmentItem[];
   observations: string;
 
+  // Google Sheets configurations
+  sheetsConfig: GoogleSheetsConfig;
+  sheetsSyncing: boolean;
+  sheetsError: string | null;
+
   // Setters
   setActiveTab: (tab: ActiveTab) => void;
   setSelectedClosureId: (id: string | null) => void;
@@ -32,6 +37,12 @@ interface CashState {
   removeAdjustment: (id: string) => void;
   updateObservations: (text: string) => void;
 
+  // Google Sheets Slices
+  updateSheetsConfig: (updates: Partial<GoogleSheetsConfig>) => void;
+  setSheetsSyncing: (isSyncing: boolean) => void;
+  setSheetsError: (err: string | null) => void;
+  markClosureSynced: (id: string, synced: boolean) => void;
+
   // Operations
   resetCurrentClosure: (preserveBalances: boolean) => void;
   saveCurrentClosure: () => CashClosure;
@@ -43,7 +54,37 @@ const DEFAULT_DENOMINATIONS = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 50
 const getStoredClosures = (): CashClosure[] => {
   try {
     const data = localStorage.getItem("cash_closures");
-    return data ? JSON.parse(data) : [];
+    if (!data) return [];
+    
+    const parsed: CashClosure[] = JSON.parse(data);
+    let changed = false;
+    
+    // Migrate and ensure grandTotal does not include bancolombiaCredit
+    const migrated = parsed.map((item) => {
+      const computedTotalCash = item.denominations.reduce((acc, d) => acc + (d.total || 0), 0);
+      const totalAdjustments = item.adjustments.reduce((acc, adj) => acc + adj.value, 0);
+      const correctedGrandTotal = 
+        computedTotalCash + 
+        (item.bancolombiaBalance || 0) + 
+        (item.tksBalance || 0) + 
+        (item.ptmBalance || 0) + 
+        totalAdjustments;
+        
+      if (item.grandTotal !== correctedGrandTotal) {
+        changed = true;
+        return {
+          ...item,
+          totalCash: computedTotalCash,
+          grandTotal: correctedGrandTotal
+        };
+      }
+      return item;
+    });
+
+    if (changed) {
+      persistClosures(migrated);
+    }
+    return migrated;
   } catch (e) {
     console.error("Error reading cash closures from localStorage", e);
     return [];
@@ -95,9 +136,44 @@ export const useCashStore = create<CashState>((set, get) => ({
   adjustments: getStoredDraft("adjustments", []),
   observations: getStoredDraft("observations", ""),
 
+  // Google Sheets initial state
+  sheetsConfig: getStoredDraft("sheetsConfig", {
+    clientId: "10335006369119-dummy.apps.googleusercontent.com",
+    spreadsheetId: "",
+    sheetName: "Cierres de Caja",
+    autoSync: true,
+    accessToken: null,
+    tokenExpiresAt: null,
+    lastSyncedAt: null,
+  }),
+  sheetsSyncing: false,
+  sheetsError: null,
+
   setActiveTab: (tab) => set({ activeTab: tab }),
 
   setSelectedClosureId: (id) => set({ selectedClosureId: id }),
+
+  updateSheetsConfig: (updates) => {
+    set((state) => {
+      const updated = { ...state.sheetsConfig, ...updates };
+      persistDraft("sheetsConfig", updated);
+      return { sheetsConfig: updated };
+    });
+  },
+
+  setSheetsSyncing: (isSyncing) => set({ sheetsSyncing: isSyncing }),
+
+  setSheetsError: (err) => set({ sheetsError: err }),
+
+  markClosureSynced: (id, synced) => {
+    set((state) => {
+      const updatedClosures = state.closures.map((c) =>
+        c.id === id ? { ...c, syncedToSheets: synced } : c
+      );
+      persistClosures(updatedClosures);
+      return { closures: updatedClosures };
+    });
+  },
 
   updateDenominationQuantity: (denomination, quantity) => {
     set((state) => {
@@ -209,7 +285,6 @@ export const useCashStore = create<CashState>((set, get) => ({
     const grandTotal =
       totalCash +
       state.bancolombiaBalance +
-      state.bancolombiaCredit +
       state.tksBalance +
       state.ptmBalance +
       totalAdjustments;
@@ -240,7 +315,7 @@ export const useCashStore = create<CashState>((set, get) => ({
       const updated = state.closures.filter((c) => c.id !== id);
       persistClosures(updated);
       const selectedId = state.selectedClosureId === id ? null : state.selectedClosureId;
-      return { closures: updated, selectedId };
+      return { closures: updated, selectedClosureId: selectedId };
     });
   },
 }));

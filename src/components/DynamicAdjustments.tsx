@@ -28,7 +28,7 @@ const adjustmentFormSchema = z.object({
       return parseInt(cleaned, 10);
     })
     .pipe(
-      z.number({ invalid_type_error: "Debe ingresar un valor numérico válido." })
+      z.number()
         .min(-50000000, "El valor excede el límite razonable (mín -$50.000.000).")
         .max(50000000, "El valor excede el límite razonable (máx $50.000.000).")
     )
@@ -50,7 +50,7 @@ export default function DynamicAdjustments() {
       const res = z.string().min(3, "Mínimo 3 caracteres.").safeParse(trimmed);
       setErrors(prev => ({
         ...prev,
-        concept: res.success ? undefined : res.error.errors[0].message
+        concept: res.success ? undefined : res.error.issues[0].message
       }));
     } else {
       if (val === "" || val === "+" || val === "-") {
@@ -71,7 +71,7 @@ export default function DynamicAdjustments() {
 
       setErrors(prev => ({
         ...prev,
-        valueStr: res.success ? undefined : res.error.errors[0].message
+        valueStr: res.success ? undefined : res.error.issues[0].message
       }));
     }
   };
@@ -84,7 +84,7 @@ export default function DynamicAdjustments() {
     
     if (!result.success) {
       const newErrors: typeof errors = {};
-      result.error.errors.forEach((err) => {
+      result.error.issues.forEach((err) => {
         if (err.path[0]) {
           newErrors[err.path[0] as "concept" | "valueStr"] = err.message;
         }
