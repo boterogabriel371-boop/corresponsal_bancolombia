@@ -1,0 +1,246 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import { create } from "zustand";
+import { CashClosure, DenominationItem, AdjustmentItem, ActiveTab } from "./types";
+
+interface CashState {
+  closures: CashClosure[];
+  activeTab: ActiveTab;
+  selectedClosureId: string | null;
+
+  // Active closure draft
+  denominations: DenominationItem[];
+  bancolombiaBalance: number;
+  bancolombiaCredit: number;
+  tksBalance: number;
+  ptmBalance: number;
+  adjustments: AdjustmentItem[];
+  observations: string;
+
+  // Setters
+  setActiveTab: (tab: ActiveTab) => void;
+  setSelectedClosureId: (id: string | null) => void;
+  updateDenominationQuantity: (denomination: number, quantity: number) => void;
+  updateBancolombiaBalance: (val: number) => void;
+  updateBancolombiaCredit: (val: number) => void;
+  updateTksBalance: (val: number) => void;
+  updatePtmBalance: (val: number) => void;
+  addAdjustment: (concept: string, value: number) => void;
+  removeAdjustment: (id: string) => void;
+  updateObservations: (text: string) => void;
+
+  // Operations
+  resetCurrentClosure: (preserveBalances: boolean) => void;
+  saveCurrentClosure: () => CashClosure;
+  deleteClosure: (id: string) => void;
+}
+
+const DEFAULT_DENOMINATIONS = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100];
+
+const getStoredClosures = (): CashClosure[] => {
+  try {
+    const data = localStorage.getItem("cash_closures");
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    console.error("Error reading cash closures from localStorage", e);
+    return [];
+  }
+};
+
+const persistClosures = (closures: CashClosure[]) => {
+  try {
+    localStorage.setItem("cash_closures", JSON.stringify(closures));
+  } catch (e) {
+    console.error("Error saving cash closures to localStorage", e);
+  }
+};
+
+const getStoredDraft = (key: string, defaultValue: any) => {
+  try {
+    const data = localStorage.getItem(`draft_${key}`);
+    return data ? JSON.parse(data) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+};
+
+const persistDraft = (key: string, value: any) => {
+  try {
+    localStorage.setItem(`draft_${key}`, JSON.stringify(value));
+  } catch {}
+};
+
+const initialDenominations: DenominationItem[] = getStoredDraft("denominations", 
+  DEFAULT_DENOMINATIONS.map((num) => ({
+    denomination: num,
+    quantity: 0,
+    total: 0,
+  }))
+);
+
+export const useCashStore = create<CashState>((set, get) => ({
+  closures: getStoredClosures(),
+  activeTab: "cuadre",
+  selectedClosureId: null,
+
+  // Draft state load
+  denominations: initialDenominations,
+  bancolombiaBalance: getStoredDraft("bancolombiaBalance", 0),
+  bancolombiaCredit: getStoredDraft("bancolombiaCredit", 0),
+  tksBalance: getStoredDraft("tksBalance", 0),
+  ptmBalance: getStoredDraft("ptmBalance", 0),
+  adjustments: getStoredDraft("adjustments", []),
+  observations: getStoredDraft("observations", ""),
+
+  setActiveTab: (tab) => set({ activeTab: tab }),
+
+  setSelectedClosureId: (id) => set({ selectedClosureId: id }),
+
+  updateDenominationQuantity: (denomination, quantity) => {
+    set((state) => {
+      const updatedDenom = state.denominations.map((item) => {
+        if (item.denomination === denomination) {
+          const qty = Math.max(0, quantity);
+          return {
+            denomination,
+            quantity: qty,
+            total: qty * denomination,
+          };
+        }
+        return item;
+      });
+      persistDraft("denominations", updatedDenom);
+      return { denominations: updatedDenom };
+    });
+  },
+
+  updateBancolombiaBalance: (val) => {
+    const v = Math.max(0, val);
+    persistDraft("bancolombiaBalance", v);
+    set({ bancolombiaBalance: v });
+  },
+
+  updateBancolombiaCredit: (val) => {
+    const v = Math.max(0, val);
+    persistDraft("bancolombiaCredit", v);
+    set({ bancolombiaCredit: v });
+  },
+
+  updateTksBalance: (val) => {
+    const v = Math.max(0, val);
+    persistDraft("tksBalance", v);
+    set({ tksBalance: v });
+  },
+
+  updatePtmBalance: (val) => {
+    const v = Math.max(0, val);
+    persistDraft("ptmBalance", v);
+    set({ ptmBalance: v });
+  },
+
+  addAdjustment: (concept, value) => {
+    set((state) => {
+      const newAdjustment: AdjustmentItem = {
+        id: crypto.randomUUID(),
+        concept: concept.trim() || "Ajuste sin concepto",
+        value,
+      };
+      const updated = [...state.adjustments, newAdjustment];
+      persistDraft("adjustments", updated);
+      return { adjustments: updated };
+    });
+  },
+
+  removeAdjustment: (id) => {
+    set((state) => {
+      const updated = state.adjustments.filter((adj) => adj.id !== id);
+      persistDraft("adjustments", updated);
+      return { adjustments: updated };
+    });
+  },
+
+  updateObservations: (text) => {
+    persistDraft("observations", text);
+    set({ observations: text });
+  },
+
+  resetCurrentClosure: (preserveBalances) => {
+    const freshDenominations = DEFAULT_DENOMINATIONS.map((num) => ({
+      denomination: num,
+      quantity: 0,
+      total: 0,
+    }));
+
+    persistDraft("denominations", freshDenominations);
+    persistDraft("adjustments", []);
+    persistDraft("observations", "");
+
+    if (preserveBalances) {
+      set({
+        denominations: freshDenominations,
+        adjustments: [],
+        observations: "",
+      });
+    } else {
+      persistDraft("bancolombiaBalance", 0);
+      persistDraft("bancolombiaCredit", 0);
+      persistDraft("tksBalance", 0);
+      persistDraft("ptmBalance", 0);
+
+      set({
+        denominations: freshDenominations,
+        bancolombiaBalance: 0,
+        bancolombiaCredit: 0,
+        tksBalance: 0,
+        ptmBalance: 0,
+        adjustments: [],
+        observations: "",
+      });
+    }
+  },
+
+  saveCurrentClosure: () => {
+    const state = get();
+    const totalCash = state.denominations.reduce((acc, item) => acc + item.total, 0);
+    const totalAdjustments = state.adjustments.reduce((acc, item) => acc + item.value, 0);
+    const grandTotal =
+      totalCash +
+      state.bancolombiaBalance +
+      state.bancolombiaCredit +
+      state.tksBalance +
+      state.ptmBalance +
+      totalAdjustments;
+
+    const newClosure: CashClosure = {
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      denominations: JSON.parse(JSON.stringify(state.denominations)),
+      totalCash,
+      bancolombiaBalance: state.bancolombiaBalance,
+      bancolombiaCredit: state.bancolombiaCredit,
+      tksBalance: state.tksBalance,
+      ptmBalance: state.ptmBalance,
+      adjustments: JSON.parse(JSON.stringify(state.adjustments)),
+      observations: state.observations,
+      grandTotal,
+    };
+
+    const updatedClosures = [newClosure, ...state.closures];
+    set({ closures: updatedClosures });
+    persistClosures(updatedClosures);
+
+    return newClosure;
+  },
+
+  deleteClosure: (id) => {
+    set((state) => {
+      const updated = state.closures.filter((c) => c.id !== id);
+      persistClosures(updated);
+      const selectedId = state.selectedClosureId === id ? null : state.selectedClosureId;
+      return { closures: updated, selectedId };
+    });
+  },
+}));

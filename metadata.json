@@ -1,0 +1,6 @@
+{
+  "name": "Cuadre de Caja Diaria",
+  "description": "Aplicación profesional para la gestión y cuadre diario de caja, diseñada para el conteo eficiente de efectivo, saldos operativos y ajustes en tiempo real.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
