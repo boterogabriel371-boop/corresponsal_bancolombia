@@ -98,15 +98,54 @@ export default function GoogleSheetsSync() {
     return input.trim();
   };
 
-  const handleSaveConfigs = () => {
+  const handleSaveConfigs = async () => {
     const spreadsheetId = extractSpreadsheetId(rawUrl);
+    if (!spreadsheetId) {
+      setSheetsError("Por favor, ingrese un enlace o ID de Google Sheets válido.");
+      return;
+    }
+    
+    setSheetsError(null);
     updateSheetsConfig({
       spreadsheetId,
       sheetName: sheetNameInput.trim() || "Cierres de Caja",
       clientId: clientIdInput.trim() || sheetsConfig.clientId,
     });
-    setSyncStatusMsg("Configuración de hoja de cálculo guardada.");
-    setTimeout(() => setSyncStatusMsg(null), 3000);
+
+    setSyncStatusMsg("¡Enlace de Google Sheets guardado!");
+
+    // If authorized, trigger automatic sync of pending closures or the latest closure
+    if (isAuthorized) {
+      setSyncStatusMsg("Enlace guardado. Sincronizando datos con tu hoja de cálculo...");
+      
+      // Delay so state can process, though handleSyncClosure uses rawUrl directly
+      setTimeout(async () => {
+        const pending = closures.filter(c => !c.syncedToSheets);
+        if (pending.length > 0) {
+          let successCount = 0;
+          for (const item of pending) {
+            const success = await handleSyncClosure(item);
+            if (success) successCount++;
+          }
+          if (successCount > 0) {
+            setSyncStatusMsg(`¡Listísimo! Se conectó la hoja y se sincronizaron ${successCount} cierres pendientes.`);
+          }
+        } else if (closures.length > 0) {
+          // If no pending, sync the latest anyway so the sheet has data!
+          const lastClosure = closures[0];
+          setSyncStatusMsg(`Copiando el último cierre de caja en tu Excel para inicializar la hoja...`);
+          const success = await handleSyncClosure(lastClosure);
+          if (success) {
+            setSyncStatusMsg("¡Excelente! El cierre más reciente ha sido copiado a tu nueva hoja de Google Sheets.");
+          }
+        } else {
+          setSyncStatusMsg("¡Enlace guardado! La hoja de cálculo está lista. Se sincronizará automáticamente cuando guardes tu próximo cierre.");
+        }
+        setTimeout(() => setSyncStatusMsg(null), 6000);
+      }, 500);
+    } else {
+      setTimeout(() => setSyncStatusMsg("Enlace guardado. Conecta tu cuenta de Google arriba con el botón negro para iniciar la sincronización."), 1500);
+    }
   };
 
   const handleSaveClientId = () => {
@@ -152,7 +191,7 @@ export default function GoogleSheetsSync() {
       return false;
     }
 
-    const sprId = sheetsConfig.spreadsheetId || extractSpreadsheetId(rawUrl);
+    const sprId = extractSpreadsheetId(rawUrl) || sheetsConfig.spreadsheetId;
     if (!sprId) {
       if (!isAuto) setSheetsError("Por favor ingrese el enlace o ID de la hoja Google Sheets.");
       return false;
