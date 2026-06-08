@@ -18,9 +18,7 @@ import PrintReportView from "./components/PrintReportView";
 import GoogleSheetsSync from "./components/GoogleSheetsSync";
 import { syncClosureToGoogleSheets } from "./sheetsService";
 
-// Libraries for PDF generation
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
+
 
 import { 
   CheckCircle2, 
@@ -136,8 +134,6 @@ export default function App() {
   const [showNewDayModal, setShowNewDayModal] = useState(false);
   const [showSaveSuccessModal, setShowSaveSuccessModal] = useState(false);
   const [justSavedClosure, setJustSavedClosure] = useState<CashClosure | null>(null);
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportMessage, setExportMessage] = useState("");
 
   // Hidden print element target
   const [printClosure, setPrintClosure] = useState<CashClosure | null>(null);
@@ -168,76 +164,7 @@ export default function App() {
     };
   };
 
-  // Handler to export ANY closure as PDF using jsPDF + html2canvas
-  const handleExportPDF = async (closure: CashClosure) => {
-    setIsExporting(true);
-    setExportMessage("Generando documento PDF de alta fidelidad...");
-    setPrintClosure(closure);
 
-    // Wait short delay to guarantee React has updated the offscreen DOM
-    setTimeout(async () => {
-      try {
-        const element = document.getElementById("hidden-print-report-wrapper");
-        if (!element) {
-          throw new Error("No se pudo encontrar el contenedor de impresión (#hidden-print-report-wrapper).");
-        }
-
-        // Workaround for html2canvas crashing on Tailwind v4's oklch() color function parser.
-        // We temporarily redefine document.styleSheets to be empty during parsing so html2canvas
-        // bypasses raw stylesheet processing and relies solely on the browser-resolved computed
-        // style values (which the browser naturally translates to standard RGB/RGBA values!).
-        const originalStyleSheetsDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, "styleSheets");
-        Object.defineProperty(document, "styleSheets", {
-          get: () => [],
-          configurable: true,
-        });
-
-        let canvas;
-        try {
-          canvas = await html2canvas(element, {
-            scale: 2, // High DPI rendering
-            useCORS: true,
-            logging: true, // Enable logging for debugging
-            backgroundColor: "#ffffff",
-            windowWidth: 792, // Explicitly set width to prevent viewport scaling bugs
-          });
-        } finally {
-          // Restore original document.styleSheets descriptor
-          if (originalStyleSheetsDescriptor) {
-            Object.defineProperty(document, "styleSheets", originalStyleSheetsDescriptor);
-          } else {
-            delete (document as any).styleSheets;
-          }
-        }
-
-        const imgData = canvas.toDataURL("image/png", 1.0);
-        
-        // Use custom sizing for letter page (612pt width x 792pt height)
-        const pdf = new jsPDF({
-          orientation: "p",
-          unit: "pt",
-          format: "letter",
-        });
-
-        const pdfWidth = 612;
-        const pdfHeight = 792;
-        
-        // Calculate proportional height
-        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, imgHeight);
-        
-        const dateStr = new Date(closure.createdAt).toISOString().split("T")[0];
-        pdf.save(`Cuadre-de-Caja_${dateStr}.pdf`);
-      } catch (err: any) {
-        console.error("PDF generation failed:", err);
-        alert(`Ocurrió un error al generar el PDF: ${err?.message || err}. Por favor reintente o utilice la opción de imprimir directamente.`);
-      } finally {
-        setIsExporting(false);
-        setExportMessage("");
-      }
-    }, 450);
-  };
 
   // Direct print action
   const handlePrint = (closure: CashClosure) => {
@@ -260,7 +187,6 @@ export default function App() {
       <Header
         onSave={handleSaveClosure}
         onPrint={() => handlePrint(getCurrentStateAsClosure())}
-        onExportPDF={() => handleExportPDF(getCurrentStateAsClosure())}
         onNewDay={() => setShowNewDayModal(true)}
         theme={theme}
         toggleTheme={toggleTheme}
@@ -291,7 +217,6 @@ export default function App() {
           /* TAB 2: HISTORIAL DE CIERRES (INDEPENDENT SCREEN) */
           <ClosureHistory
             onPrintHistoric={handlePrint}
-            onExportHistoricPDF={handleExportPDF}
           />
         )}
       </main>
@@ -446,22 +371,12 @@ export default function App() {
               ¿Qué te gustaría hacer con este snapshot auditado antes de iniciar un nuevo día?
             </p>
 
-            <div className="grid grid-cols-2 gap-2" id="modal-ss-quick-btns">
-              <button
-                onClick={() => {
-                  handleExportPDF(justSavedClosure);
-                }}
-                className="inline-flex justify-center items-center gap-1.5 px-3 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer"
-                id="btn-ss-pdf"
-              >
-                <Download size={13} />
-                Descargar PDF
-              </button>
+            <div className="flex justify-center" id="modal-ss-quick-btns">
               <button
                 onClick={() => {
                   handlePrint(justSavedClosure);
                 }}
-                className="inline-flex justify-center items-center gap-1.5 px-3 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer"
+                className="w-full inline-flex justify-center items-center gap-1.5 px-3 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer"
                 id="btn-ss-print"
               >
                 <FileText size={13} />
@@ -495,17 +410,7 @@ export default function App() {
         </div>
       )}
 
-      {/* OVERLAY EXPORTING SPINNER */}
-      {isExporting && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs" id="exporting-overlay">
-          <div className="bg-white dark:bg-slate-900 rounded-xl p-5 shadow-xl border border-gray-150 dark:border-slate-800 flex flex-col items-center justify-center gap-3.5" id="exporting-box">
-            <Loader2 className="animate-spin text-slate-900 dark:text-indigo-400" size={32} />
-            <p className="text-xs font-bold text-gray-700 dark:text-slate-300 font-mono tracking-tight" id="exporting-message">
-              {exportMessage}
-            </p>
-          </div>
-        </div>
-      )}
+
 
     </div>
   );

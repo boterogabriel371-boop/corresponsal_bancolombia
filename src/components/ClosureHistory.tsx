@@ -32,11 +32,10 @@ import {
 
 interface ClosureHistoryProps {
   onPrintHistoric: (closure: CashClosure) => void;
-  onExportHistoricPDF: (closure: CashClosure) => void;
   onDeleteClosure?: (id: string) => void;
 }
 
-export default function ClosureHistory({ onPrintHistoric, onExportHistoricPDF }: ClosureHistoryProps) {
+export default function ClosureHistory({ onPrintHistoric }: ClosureHistoryProps) {
   const { closures, deleteClosure, selectedClosureId, setSelectedClosureId } = useCashStore();
   
   // Custom delete item confirmation state
@@ -250,14 +249,7 @@ export default function ClosureHistory({ onPrintHistoric, onExportHistoricPDF }:
                 >
                   <Printer size={15} />
                 </button>
-                <button
-                  onClick={() => onExportHistoricPDF(selectedClosure)}
-                  className="p-2 text-slate-500 hover:text-indigo-650 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-                  title="Descargar PDF de este cierre"
-                  id="det-btn-pdf"
-                >
-                  <FileDown size={15} />
-                </button>
+
                 <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-1" id="det-divider"></div>
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
