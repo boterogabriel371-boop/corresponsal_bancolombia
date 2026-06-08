@@ -109,6 +109,14 @@ export default function GoogleSheetsSync() {
     setTimeout(() => setSyncStatusMsg(null), 3000);
   };
 
+  const handleSaveClientId = () => {
+    updateSheetsConfig({
+      clientId: clientIdInput.trim() || "10335006369119-dummy.apps.googleusercontent.com",
+    });
+    setSyncStatusMsg("Google Client ID guardado correctamente.");
+    setTimeout(() => setSyncStatusMsg(null), 3000);
+  };
+
   // Helper: auto-create Sheet if it doesn't exist
   const createSheetTab = async (spreadsheetId: string, title: string, token: string) => {
     try {
@@ -489,9 +497,17 @@ export default function GoogleSheetsSync() {
                 placeholder="Ingrese su Client ID de Google Cloud..."
                 className="w-full text-[10px] face-mono font-bold bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 focus:border-indigo-650 focus:outline-none rounded p-1.5 text-slate-600 dark:text-slate-400 font-mono"
               />
-              <p className="text-[9px] leading-relaxed text-slate-400 dark:text-slate-500 font-medium">
+              <p className="text-[9px] leading-relaxed text-slate-400 dark:text-slate-500 font-medium font-semibold">
                 Por defecto se utiliza el Client ID de pruebas de AI Studio. Si tu aplicación se despliega en un dominio propio o localhost, crea y pega tu propio Client ID desde Google Cloud Console para evitar errores de origen cruzado de redirección.
               </p>
+              <button
+                onClick={handleSaveClientId}
+                className="mt-2 inline-flex items-center justify-center gap-1.5 py-2 px-3 text-[10px] font-extrabold text-slate-100 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 rounded-lg cursor-pointer transition-all uppercase tracking-wider shadow-3xs"
+                id="btn-save-custom-client-id"
+              >
+                <Save size={12} />
+                Guardar Client ID personalizado
+              </button>
             </div>
           </div>
         )}
