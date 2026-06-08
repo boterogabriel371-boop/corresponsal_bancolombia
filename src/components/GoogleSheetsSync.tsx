@@ -326,15 +326,15 @@ export default function GoogleSheetsSync() {
             <span>La app usará la autenticación de cuenta para agregar filas de cierres directamente con tus permisos.</span>
           </div>
 
-          {/* Vercel instructions helper */}
-          {typeof window !== "undefined" && window.location.hostname !== "localhost" && !window.location.hostname.includes("run.app") && (
-            <div className="flex flex-col gap-1.5 p-3 bg-amber-50/60 dark:bg-amber-955/20 border border-amber-250/70 dark:border-amber-900/40 rounded-xl text-[10px] text-amber-850 dark:text-amber-400 font-bold animate-fade-in animate-pulse" id="gsheets-vercel-warning">
+          {/* Warning if they are using the dummy Client ID */}
+          {typeof window !== "undefined" && (clientIdInput.includes("dummy") || sheetsConfig.clientId.includes("dummy")) && (
+            <div className="flex flex-col gap-1.5 p-3 bg-amber-50/70 dark:bg-amber-955/20 border border-amber-250 dark:border-amber-900/40 rounded-xl text-[10px] text-amber-850 dark:text-amber-400 font-bold animate-fade-in" id="gsheets-dummy-warning">
               <span className="flex items-center gap-1 font-extrabold uppercase tracking-wide text-[9px] text-amber-700 dark:text-amber-450">
                 <AlertTriangle size={12} className="text-amber-550 shrink-0" />
-                Dominio Externo ({window.location.hostname})
+                Configuración Requerida
               </span>
-              <p className="leading-relaxed font-semibold text-slate-800 dark:text-slate-300">
-                Para que la autenticación de Sheets funcione en tu servidor de Vercel, despliega abajo la opción <strong>"Personalizar Credenciales Client ID"</strong> y registra tu propio Google Client ID configurado en tu Google Cloud Console con la URI de redirección autorizada: <code>https://{window.location.hostname}</code>. El Client ID por defecto solo autoriza entornos de desarrollo de AI Studio.
+              <p className="leading-relaxed font-semibold text-slate-850 dark:text-slate-300">
+                Para que la autenticación de Google Sheets funcione en tu servidor actual (<code>{window.location.hostname}</code>), despliega abajo la sección <strong>"Personalizar Credenciales Client ID"</strong> e ingresa tu propio <strong>Client ID de Google Cloud</strong> con el Origen de JavaScript y URI de redirección autorizados para: <code>{window.location.origin}</code>. El ID por defecto de pruebas de AI Studio arroja un error 401 en otros entornos.
               </p>
             </div>
           )}

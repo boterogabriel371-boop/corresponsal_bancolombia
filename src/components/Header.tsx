@@ -57,7 +57,7 @@ export default function Header({ onSave, onPrint, onExportPDF, onNewDay, theme, 
       <div className="flex items-center gap-4" id="header-info">
         <div>
           <h1 className="text-lg font-extrabold text-slate-900 dark:text-slate-100 tracking-tight animate-fade-in" id="app-logo">
-            Caja Profesional <span className="text-indigo-600 dark:text-indigo-400 font-medium ml-1">v2.1</span>
+            Corresponsal Celityn <span className="text-indigo-600 dark:text-indigo-400 font-medium ml-1">v2.1</span>
           </h1>
           <p className="text-[10px] text-slate-500 dark:text-slate-400 font-extrabold uppercase tracking-widest mt-0.5" id="app-subtitle">
             Módulo de Cuadre Diario

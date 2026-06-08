@@ -179,15 +179,36 @@ export default function App() {
       try {
         const element = document.getElementById("hidden-print-report-wrapper");
         if (!element) {
-          throw new Error("No se pudo encontrar el contenedor de impresión.");
+          throw new Error("No se pudo encontrar el contenedor de impresión (#hidden-print-report-wrapper).");
         }
 
-        const canvas = await html2canvas(element, {
-          scale: 2, // High DPI rendering
-          useCORS: true,
-          logging: false,
-          backgroundColor: "#ffffff",
+        // Workaround for html2canvas crashing on Tailwind v4's oklch() color function parser.
+        // We temporarily redefine document.styleSheets to be empty during parsing so html2canvas
+        // bypasses raw stylesheet processing and relies solely on the browser-resolved computed
+        // style values (which the browser naturally translates to standard RGB/RGBA values!).
+        const originalStyleSheetsDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, "styleSheets");
+        Object.defineProperty(document, "styleSheets", {
+          get: () => [],
+          configurable: true,
         });
+
+        let canvas;
+        try {
+          canvas = await html2canvas(element, {
+            scale: 2, // High DPI rendering
+            useCORS: true,
+            logging: true, // Enable logging for debugging
+            backgroundColor: "#ffffff",
+            windowWidth: 792, // Explicitly set width to prevent viewport scaling bugs
+          });
+        } finally {
+          // Restore original document.styleSheets descriptor
+          if (originalStyleSheetsDescriptor) {
+            Object.defineProperty(document, "styleSheets", originalStyleSheetsDescriptor);
+          } else {
+            delete (document as any).styleSheets;
+          }
+        }
 
         const imgData = canvas.toDataURL("image/png", 1.0);
         
@@ -208,9 +229,9 @@ export default function App() {
         
         const dateStr = new Date(closure.createdAt).toISOString().split("T")[0];
         pdf.save(`Cuadre-de-Caja_${dateStr}.pdf`);
-      } catch (err) {
+      } catch (err: any) {
         console.error("PDF generation failed:", err);
-        alert("Ocurrió un error al generar el PDF. Por favor reintente.");
+        alert(`Ocurrió un error al generar el PDF: ${err?.message || err}. Por favor reintente o utilice la opción de imprimir directamente.`);
       } finally {
         setIsExporting(false);
         setExportMessage("");
@@ -277,8 +298,8 @@ export default function App() {
 
       {/* PERSISTENT INVISIBLE PRINT CONTENT FOR HTML2CANVAS & DIRECT SYSTEM PRINTING */}
       <div 
-        style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "792px" }}
-        className="absolute overflow-hidden bg-white"
+        style={{ position: "fixed", left: "0", top: "0", width: "792px", height: "auto", opacity: "0.01", pointerEvents: "none", zIndex: "-9999", overflow: "hidden" }}
+        className="bg-white"
         id="hidden-print-zone"
       >
         <div id="hidden-print-report-wrapper" className="bg-white" style={{ width: "792px" }}>
