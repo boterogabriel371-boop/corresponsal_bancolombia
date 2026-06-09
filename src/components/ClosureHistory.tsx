@@ -352,6 +352,14 @@ export default function ClosureHistory({ onPrintHistoric }: ClosureHistoryProps)
                     </span>
                   </div>
 
+                  {/* Comisión TKS */}
+                  <div className="flex items-center justify-between text-xs font-bold" id="det-bal-tks-commission">
+                    <span className="text-slate-500">Comisión TKS</span>
+                    <span className={`font-mono text-slate-800 dark:text-slate-200 ${(selectedClosure.tksCommission || 0) > 0 ? "font-bold text-indigo-650 dark:text-indigo-400" : "opacity-60"}`}>
+                      {formatCOP(selectedClosure.tksCommission || 0)}
+                    </span>
+                  </div>
+
                   {/* PTM Balance */}
                   <div className="flex items-center justify-between text-xs font-bold" id="det-bal-ptm">
                     <span className="text-slate-500">Saldo PTM</span>

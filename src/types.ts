@@ -26,6 +26,7 @@ export interface CashClosure {
   bancolombiaCredit: number; // Cupo Bancolombia
 
   tksBalance: number;
+  tksCommission: number; // Comisión TKS
   ptmBalance: number;
 
   adjustments: AdjustmentItem[];

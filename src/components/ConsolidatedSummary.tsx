@@ -14,6 +14,7 @@ export default function ConsolidatedSummary() {
     bancolombiaBalance,
     bancolombiaCredit,
     tksBalance,
+    tksCommission,
     ptmBalance,
     adjustments,
   } = useCashStore();
@@ -25,6 +26,7 @@ export default function ConsolidatedSummary() {
     totalCash +
     bancolombiaBalance +
     tksBalance +
+    (tksCommission || 0) +
     ptmBalance +
     totalAdjustments;
 
@@ -84,6 +86,17 @@ export default function ConsolidatedSummary() {
             </div>
             <span className={`text-xs font-mono font-bold ${tksBalance > 0 ? "text-slate-900" : "text-slate-400"}`} id="val-tks-summary">
               {formatCOP(tksBalance)}
+            </span>
+          </div>
+
+          {/* Comisión TKS */}
+          <div className="flex items-center justify-between" id="summary-item-tks-commission">
+            <div className="flex items-center gap-2 text-xs text-slate-600 font-bold" id="label-tks-commission-summary">
+              <Percent size={14} className="text-slate-400" />
+              <span>Comisión TKS</span>
+            </div>
+            <span className={`text-xs font-mono font-bold ${tksCommission > 0 ? "text-slate-900" : "text-slate-400"}`} id="val-tks-commission-summary">
+              {formatCOP(tksCommission)}
             </span>
           </div>
 

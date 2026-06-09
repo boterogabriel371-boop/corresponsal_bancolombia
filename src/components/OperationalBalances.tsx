@@ -13,10 +13,12 @@ export default function OperationalBalances() {
     bancolombiaBalance,
     bancolombiaCredit,
     tksBalance,
+    tksCommission,
     ptmBalance,
     updateBancolombiaBalance,
     updateBancolombiaCredit,
     updateTksBalance,
+    updateTksCommission,
     updatePtmBalance,
   } = useCashStore();
 
@@ -33,7 +35,7 @@ export default function OperationalBalances() {
     e.target.select();
   };
 
-  const totalBalances = bancolombiaBalance + tksBalance + ptmBalance;
+  const totalBalances = bancolombiaBalance + tksBalance + tksCommission + ptmBalance;
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden" id="operational-balances-module">
@@ -127,6 +129,33 @@ export default function OperationalBalances() {
               placeholder="$ 0"
               value={tksBalance === 0 ? "" : tksBalance.toString()}
               onChange={createInputChangeHandler(updateTksBalance)}
+              onFocus={handleFocus}
+              className="w-full text-left font-mono font-bold text-sm bg-white border-2 border-slate-200 focus:border-indigo-600 focus:outline-none rounded-xl pl-9.5 pr-4 py-2.5 transition-all text-slate-800 focus:ring-1 focus:ring-indigo-600"
+            />
+          </div>
+        </div>
+
+        {/* Comisión TKS */}
+        <div className="flex flex-col gap-1.5" id="group-tks-commission">
+          <label className="text-xs font-bold text-slate-600 flex items-center justify-between" htmlFor="input-tks-commission">
+            <span>Comisión TKS</span>
+            {tksCommission > 0 && (
+              <span className="text-[10px] text-slate-500 font-mono font-extrabold bg-slate-50 border border-slate-200 px-1.5 rounded">
+                {formatCOP(tksCommission)}
+              </span>
+            )}
+          </label>
+          <div className="relative rounded-xl shadow-3xs" id="input-tks-commission-wrapper">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400" id="icon-tks-commission">
+              <Percent size={15} />
+            </div>
+            <input
+              type="text"
+              id="input-tks-commission"
+              inputMode="numeric"
+              placeholder="$ 0"
+              value={tksCommission === 0 ? "" : tksCommission.toString()}
+              onChange={createInputChangeHandler(updateTksCommission)}
               onFocus={handleFocus}
               className="w-full text-left font-mono font-bold text-sm bg-white border-2 border-slate-200 focus:border-indigo-600 focus:outline-none rounded-xl pl-9.5 pr-4 py-2.5 transition-all text-slate-800 focus:ring-1 focus:ring-indigo-600"
             />

@@ -16,6 +16,7 @@ interface CashState {
   bancolombiaBalance: number;
   bancolombiaCredit: number;
   tksBalance: number;
+  tksCommission: number;
   ptmBalance: number;
   adjustments: AdjustmentItem[];
   observations: string;
@@ -32,6 +33,7 @@ interface CashState {
   updateBancolombiaBalance: (val: number) => void;
   updateBancolombiaCredit: (val: number) => void;
   updateTksBalance: (val: number) => void;
+  updateTksCommission: (val: number) => void;
   updatePtmBalance: (val: number) => void;
   addAdjustment: (concept: string, value: number) => void;
   removeAdjustment: (id: string) => void;
@@ -68,12 +70,14 @@ const getStoredClosures = (): CashClosure[] => {
         (item.bancolombiaBalance || 0) + 
         (item.tksBalance || 0) + 
         (item.ptmBalance || 0) + 
+        (item.tksCommission || 0) + 
         totalAdjustments;
         
-      if (item.grandTotal !== correctedGrandTotal) {
+      if (item.grandTotal !== correctedGrandTotal || item.tksCommission === undefined) {
         changed = true;
         return {
           ...item,
+          tksCommission: item.tksCommission || 0,
           totalCash: computedTotalCash,
           grandTotal: correctedGrandTotal
         };
@@ -132,6 +136,7 @@ export const useCashStore = create<CashState>((set, get) => ({
   bancolombiaBalance: getStoredDraft("bancolombiaBalance", 0),
   bancolombiaCredit: getStoredDraft("bancolombiaCredit", 0),
   tksBalance: getStoredDraft("tksBalance", 0),
+  tksCommission: getStoredDraft("tksCommission", 0),
   ptmBalance: getStoredDraft("ptmBalance", 0),
   adjustments: getStoredDraft("adjustments", []),
   observations: getStoredDraft("observations", ""),
@@ -211,6 +216,12 @@ export const useCashStore = create<CashState>((set, get) => ({
     set({ tksBalance: v });
   },
 
+  updateTksCommission: (val) => {
+    const v = Math.max(0, val);
+    persistDraft("tksCommission", v);
+    set({ tksCommission: v });
+  },
+
   updatePtmBalance: (val) => {
     const v = Math.max(0, val);
     persistDraft("ptmBalance", v);
@@ -264,6 +275,7 @@ export const useCashStore = create<CashState>((set, get) => ({
       persistDraft("bancolombiaBalance", 0);
       persistDraft("bancolombiaCredit", 0);
       persistDraft("tksBalance", 0);
+      persistDraft("tksCommission", 0);
       persistDraft("ptmBalance", 0);
 
       set({
@@ -271,6 +283,7 @@ export const useCashStore = create<CashState>((set, get) => ({
         bancolombiaBalance: 0,
         bancolombiaCredit: 0,
         tksBalance: 0,
+        tksCommission: 0,
         ptmBalance: 0,
         adjustments: [],
         observations: "",
@@ -286,6 +299,7 @@ export const useCashStore = create<CashState>((set, get) => ({
       totalCash +
       state.bancolombiaBalance +
       state.tksBalance +
+      (state.tksCommission || 0) +
       state.ptmBalance +
       totalAdjustments;
 
@@ -297,6 +311,7 @@ export const useCashStore = create<CashState>((set, get) => ({
       bancolombiaBalance: state.bancolombiaBalance,
       bancolombiaCredit: state.bancolombiaCredit,
       tksBalance: state.tksBalance,
+      tksCommission: state.tksCommission || 0,
       ptmBalance: state.ptmBalance,
       adjustments: JSON.parse(JSON.stringify(state.adjustments)),
       observations: state.observations,

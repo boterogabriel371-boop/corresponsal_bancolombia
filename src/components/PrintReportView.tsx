@@ -124,6 +124,10 @@ export default function PrintReportView({ closure, elementId = "hidden-print-rep
                 <span className="text-slate-500 font-semibold">Saldo TKS</span>
                 <span className="font-mono font-bold text-slate-900">{formatCOP(closure.tksBalance)}</span>
               </div>
+              <div className="flex justify-between text-xs" id="print-bal-tks-commission">
+                <span className="text-slate-500 font-semibold">Comisión TKS</span>
+                <span className="font-mono font-bold text-slate-900">{formatCOP(closure.tksCommission || 0)}</span>
+              </div>
               <div className="flex justify-between text-xs" id="print-bal-ptm">
                 <span className="text-slate-500 font-semibold">Saldo PTM</span>
                 <span className="font-mono font-bold text-slate-900">{formatCOP(closure.ptmBalance)}</span>

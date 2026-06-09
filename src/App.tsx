@@ -42,6 +42,7 @@ export default function App() {
     bancolombiaBalance,
     bancolombiaCredit,
     tksBalance,
+    tksCommission,
     ptmBalance,
     adjustments,
     observations,
@@ -146,6 +147,7 @@ export default function App() {
       totalCash +
       bancolombiaBalance +
       tksBalance +
+      (tksCommission || 0) +
       ptmBalance +
       totalAdjustments;
 
@@ -157,6 +159,7 @@ export default function App() {
       bancolombiaBalance,
       bancolombiaCredit,
       tksBalance,
+      tksCommission: tksCommission || 0,
       ptmBalance,
       adjustments,
       observations,
@@ -292,6 +295,10 @@ export default function App() {
               <div className="flex justify-between" id="nd-context-tks">
                 <span className="text-gray-500 dark:text-slate-400">Saldo TKS:</span>
                 <span className="font-mono text-gray-800 dark:text-slate-200">{formatCOP(tksBalance)}</span>
+              </div>
+              <div className="flex justify-between" id="nd-context-tks-commission">
+                <span className="text-gray-500 dark:text-slate-400">Comisión TKS:</span>
+                <span className="font-mono text-gray-800 dark:text-slate-200">{formatCOP(tksCommission)}</span>
               </div>
               <div className="flex justify-between" id="nd-context-ptm">
                 <span className="text-gray-500 dark:text-slate-400">Saldo PTM:</span>
