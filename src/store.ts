@@ -67,10 +67,8 @@ const getStoredClosures = (): CashClosure[] => {
       const totalAdjustments = item.adjustments.reduce((acc, adj) => acc + adj.value, 0);
       const correctedGrandTotal = 
         computedTotalCash + 
-        (item.bancolombiaBalance || 0) + 
         (item.tksBalance || 0) + 
         (item.ptmBalance || 0) + 
-        (item.tksCommission || 0) + 
         totalAdjustments;
         
       if (item.grandTotal !== correctedGrandTotal || item.tksCommission === undefined) {
@@ -297,9 +295,7 @@ export const useCashStore = create<CashState>((set, get) => ({
     const totalAdjustments = state.adjustments.reduce((acc, item) => acc + item.value, 0);
     const grandTotal =
       totalCash +
-      state.bancolombiaBalance +
       state.tksBalance +
-      (state.tksCommission || 0) +
       state.ptmBalance +
       totalAdjustments;
 

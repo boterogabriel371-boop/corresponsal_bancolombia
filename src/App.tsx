@@ -145,9 +145,7 @@ export default function App() {
     const totalAdjustments = adjustments.reduce((acc, item) => acc + item.value, 0);
     const grandTotal =
       totalCash +
-      bancolombiaBalance +
       tksBalance +
-      (tksCommission || 0) +
       ptmBalance +
       totalAdjustments;
 

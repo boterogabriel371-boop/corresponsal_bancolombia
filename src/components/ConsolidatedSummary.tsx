@@ -24,9 +24,7 @@ export default function ConsolidatedSummary() {
 
   const grandTotal =
     totalCash +
-    bancolombiaBalance +
     tksBalance +
-    (tksCommission || 0) +
     ptmBalance +
     totalAdjustments;
 
@@ -60,7 +58,7 @@ export default function ConsolidatedSummary() {
           <div className="flex items-center justify-between" id="summary-item-bancolombia">
             <div className="flex items-center gap-2 text-xs text-slate-600 font-bold" id="label-bancolombia-summary">
               <Landmark size={14} className="text-slate-400" />
-              <span>Saldo Bancolombia</span>
+              <span>Saldo Bancolombia <span className="text-[9px] text-slate-400 dark:text-slate-500 font-normal ml-1 bg-slate-100 dark:bg-slate-850 px-1 py-0.5 rounded">Informativo</span></span>
             </div>
             <span className={`text-xs font-mono font-bold ${bancolombiaBalance > 0 ? "text-slate-900" : "text-slate-400"}`} id="val-bancolombia-summary">
               {formatCOP(bancolombiaBalance)}
@@ -93,7 +91,7 @@ export default function ConsolidatedSummary() {
           <div className="flex items-center justify-between" id="summary-item-tks-commission">
             <div className="flex items-center gap-2 text-xs text-slate-600 font-bold" id="label-tks-commission-summary">
               <Percent size={14} className="text-slate-400" />
-              <span>Comisión TKS</span>
+              <span>Comisión TKS <span className="text-[9px] text-slate-400 dark:text-slate-500 font-normal ml-1 bg-slate-100 dark:bg-slate-850 px-1 py-0.5 rounded">Informativo</span></span>
             </div>
             <span className={`text-xs font-mono font-bold ${tksCommission > 0 ? "text-slate-900" : "text-slate-400"}`} id="val-tks-commission-summary">
               {formatCOP(tksCommission)}
