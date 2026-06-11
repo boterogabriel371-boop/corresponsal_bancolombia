@@ -275,7 +275,7 @@ export default function App() {
                   Iniciar Nuevo Día de Caja
                 </h3>
                 <p className="text-xs text-gray-500 dark:text-slate-400 mt-1 leading-relaxed" id="modal-nd-body">
-                  ¿Deseas conservar los saldos de plataformas administrativas (<strong className="text-gray-800 dark:text-slate-200">Bancolombia, TKS, PTM</strong>) para el siguiente turno de cuadre?
+                  ¿Deseas conservar los saldos de plataformas administrativas (<strong className="text-gray-800 dark:text-slate-200">Bancolombia, TKS, PTM</strong>) y los ajustes de caja (egresos, descuadres, etc.) para el siguiente turno?
                 </p>
               </div>
             </div>
@@ -313,7 +313,7 @@ export default function App() {
                 className="flex-1 sm:flex-initial inline-flex justify-center items-center px-4 py-2.5 text-xs font-bold text-gray-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer"
                 id="btn-nd-yes"
               >
-                Sí, conservar saldos
+                Sí, conservar saldos y ajustes
               </button>
               <button
                 onClick={() => {

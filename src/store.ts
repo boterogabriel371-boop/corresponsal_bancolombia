@@ -260,16 +260,16 @@ export const useCashStore = create<CashState>((set, get) => ({
     }));
 
     persistDraft("denominations", freshDenominations);
-    persistDraft("adjustments", []);
-    persistDraft("observations", "");
 
     if (preserveBalances) {
+      persistDraft("observations", "");
       set({
         denominations: freshDenominations,
-        adjustments: [],
         observations: "",
       });
     } else {
+      persistDraft("adjustments", []);
+      persistDraft("observations", "");
       persistDraft("bancolombiaBalance", 0);
       persistDraft("bancolombiaCredit", 0);
       persistDraft("tksBalance", 0);
